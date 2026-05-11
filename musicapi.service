@@ -1,0 +1,14 @@
+# musicapi.service
+
+[Unit]
+Description=Private Music API
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/music-api
+ExecStart=/root/music-api/venv/bin/bash start.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
