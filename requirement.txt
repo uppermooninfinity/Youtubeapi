@@ -1,0 +1,11 @@
+# requirements.txt
+
+fastapi
+uvicorn[standard]
+yt-dlp
+aiofiles
+httpx
+python-multipart
+uvloop
+orjson
+python-dotenv
