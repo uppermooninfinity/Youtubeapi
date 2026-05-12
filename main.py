@@ -8,7 +8,7 @@ import logging
 from downloader import download_audio, download_video
 from utils import generate_token, validate_token
 
-from cookie_manager import CookieManager
+from cookies_manager import CookieManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("youtube-api")
