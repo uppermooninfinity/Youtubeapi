@@ -18,6 +18,7 @@ async def download_audio(video_id: str):
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": f"downloads/{video_id}.%(ext)s",
+        "cookies": "cookies.txt"
         "quiet": True,
         "noplaylist": True,
         "geo_bypass": True,
