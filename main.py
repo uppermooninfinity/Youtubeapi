@@ -6,7 +6,19 @@ from utils import generate_token, validate_token
 
 # ✅ ADD: cookie manager integration
 from cookie_manager import CookieManager
+import logging
+from fastapi import Request
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("youtube-api")
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"{request.method} {request.url}")
+    response = await call_next(request)
+    return response
+    
 app = FastAPI()
 
 # ✅ START AUTO COOKIE REFRESH ON SERVER START
