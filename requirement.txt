@@ -9,3 +9,7 @@ python-multipart
 uvloop
 orjson
 python-dotenv
+fastapi
+uvicorn[standard]
+requests
+browser-cookie3
