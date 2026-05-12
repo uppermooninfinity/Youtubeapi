@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-import os
 import asyncio
 import logging
 import time
@@ -16,7 +15,11 @@ logger = logging.getLogger("youtube-api")
 
 app = FastAPI()
 
-r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+r = redis.Redis(
+    host="localhost",
+    port=6379,
+    decode_responses=True
+)
 
 download_lock = asyncio.Lock()
 
@@ -27,15 +30,23 @@ WINDOW = 60
 
 def rate_limit(ip):
     now = time.time()
-    RATE_LIMIT[ip] = [t for t in RATE_LIMIT.get(ip, []) if now - t < WINDOW]
+
+    RATE_LIMIT[ip] = [
+        t for t in RATE_LIMIT.get(ip, [])
+        if now - t < WINDOW
+    ]
+
     if len(RATE_LIMIT.get(ip, [])) >= LIMIT:
         return False
+
     RATE_LIMIT.setdefault(ip, []).append(now)
     return True
 
 
 def get_stream_url(video_id):
+
     cached = r.get(video_id)
+
     if cached:
         return cached
 
@@ -46,35 +57,78 @@ def get_stream_url(video_id):
     }
 
     with YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"https://youtube.com/watch?v={video_id}", download=False)
+
+        info = ydl.extract_info(
+            f"https://youtube.com/watch?v={video_id}",
+            download=False
+        )
+
         url = info["url"]
 
     r.setex(video_id, 3600, url)
+
     return url
 
 
 def ffmpeg_stream(url):
+
     cmd = [
         "ffmpeg",
-        "-i", url,
-        "-f", "mp3",
+        "-i",
+        url,
+        "-f",
+        "mp3",
         "-vn",
         "pipe:1"
     ]
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+    return subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL
+    )
 
 
 @app.get("/")
 async def root():
-    return {"status": "online", "service": "ffmpeg streaming api"}
+
+    return {
+        "status": "online",
+        "service": "ffmpeg streaming api"
+    }
 
 
 @app.get("/health")
 async def health():
+
     return {
         "status": "ok",
         "redis": r.ping(),
         "cache_keys": len(r.keys())
+    }
+
+
+@app.get("/download")
+async def download(
+    url: str,
+    type: str,
+    request: Request
+):
+
+    ip = request.client.host
+
+    if not rate_limit(ip):
+        raise HTTPException(429, "Too many requests")
+
+    if len(url) != 11:
+        raise HTTPException(400, "Invalid video id")
+
+    token = generate_token(url)
+
+    logger.info(f"Generated token for {url}")
+
+    return {
+        "download_token": token
     }
 
 
@@ -85,6 +139,7 @@ async def stream(
     x_download_token: str = Header(None),
     request: Request = None
 ):
+
     ip = request.client.host
 
     if not rate_limit(ip):
@@ -101,6 +156,7 @@ async def stream(
     async with download_lock:
 
         try:
+
             stream_url = get_stream_url(video_id)
 
             process = ffmpeg_stream(stream_url)
@@ -111,5 +167,7 @@ async def stream(
             )
 
         except Exception as e:
+
             logger.error(f"Stream failed: {e}")
+
             raise HTTPException(500, "Streaming failed")
