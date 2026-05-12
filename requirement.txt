@@ -13,3 +13,6 @@ fastapi
 uvicorn[standard]
 requests
 browser-cookie3
+redis
+httpx
+loguru
