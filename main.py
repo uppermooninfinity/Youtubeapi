@@ -1,17 +1,17 @@
-# main.py
-
-from fastapi import FastAPI
-from fastapi import Header
-from fastapi import HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 
-from downloader import download_audio
-from downloader import download_video
+from downloader import download_audio, download_video
+from utils import generate_token, validate_token
 
-from utils import generate_token
-from utils import validate_token
+# ✅ ADD: cookie manager integration
+from cookie_manager import CookieManager
 
 app = FastAPI()
+
+# ✅ START AUTO COOKIE REFRESH ON SERVER START
+cookie_manager = CookieManager()
+cookie_manager.start_auto_refresh()
 
 
 @app.get("/")
